@@ -25,8 +25,25 @@ SCREEN_HEIGHT = BLOCK_SIZE * GRID_HEIGHT
 FPS = 60
 MOVE_DELAY = 100  # Milliseconds between moves
 SOFT_DROP_DELAY = 50
-INITIAL_FALL_SPEED = 1000  # Milliseconds between automatic drops
-LEVEL_SPEEDUP = 0.8  # Multiply fall speed by this each level
+
+# Difficulty settings
+DIFFICULTY_LEVELS = {
+    "Easy": {
+        "fall_speed": 1000,    # Initial fall speed in milliseconds
+        "speedup": 0.9,        # Level speedup multiplier
+        "score_multiplier": 1   # Score multiplier
+    },
+    "Medium": {
+        "fall_speed": 800,
+        "speedup": 0.8,
+        "score_multiplier": 1.5
+    },
+    "Hard": {
+        "fall_speed": 500,
+        "speedup": 0.7,
+        "score_multiplier": 2
+    }
+}
 
 # Scoring system
 POINTS = {

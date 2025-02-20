@@ -14,6 +14,8 @@ class TetrisGame:
         self.small_font = pygame.font.Font(None, 24)  # Smaller font for controls
         self.sounds = SoundEffects()
 
+        self.difficulty = "Medium"  # Default difficulty
+        self.show_menu = True
         self.reset_game()
 
     def reset_game(self):
@@ -25,17 +27,37 @@ class TetrisGame:
         self.score = 0
         self.level = 1
         self.lines_cleared = 0
-        self.fall_speed = INITIAL_FALL_SPEED
+        self.fall_speed = DIFFICULTY_LEVELS[self.difficulty]["fall_speed"]
         self.last_fall = pygame.time.get_ticks()
         self.last_move = pygame.time.get_ticks()
 
-    def handle_input(self):
+    def handle_menu_input(self):
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 return False
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:
                     return False
+                elif event.key in [pygame.K_UP, pygame.K_DOWN]:
+                    difficulties = list(DIFFICULTY_LEVELS.keys())
+                    current_idx = difficulties.index(self.difficulty)
+                    if event.key == pygame.K_UP:
+                        self.difficulty = difficulties[(current_idx - 1) % len(difficulties)]
+                    else:
+                        self.difficulty = difficulties[(current_idx + 1) % len(difficulties)]
+                elif event.key == pygame.K_RETURN:
+                    self.show_menu = False
+                    self.reset_game()
+        return True
+
+    def handle_game_input(self):
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                return False
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_ESCAPE:
+                    self.show_menu = True  # Return to menu instead of quitting
+                    return True
                 if event.key == pygame.K_p:  # Toggle pause
                     self.paused = not self.paused
                 elif event.key == pygame.K_r:  # Reset game
@@ -59,21 +81,29 @@ class TetrisGame:
 
         return True
 
-    def draw_controls(self, x, y):
-        controls = [
-            "Controls:",
-            "Left/Right - Move",
-            "Up - Rotate",
-            "Down - Soft Drop",
-            "Space - Hard Drop",
-            "P - Pause",
-            "R - Restart",
-            "ESC - Exit"
-        ]
+    def draw_menu(self):
+        self.screen.fill(BLACK)
 
-        for i, text in enumerate(controls):
-            surface = self.small_font.render(text, True, WHITE)
-            self.screen.blit(surface, (x, y + i * 25))
+        # Draw title
+        title = self.font.render("TETRIS", True, WHITE)
+        title_rect = title.get_rect(center=(SCREEN_WIDTH // 2, SCREEN_HEIGHT // 4))
+        self.screen.blit(title, title_rect)
+
+        # Draw difficulty options
+        y_offset = SCREEN_HEIGHT // 2
+        for diff in DIFFICULTY_LEVELS.keys():
+            color = WHITE if diff == self.difficulty else GRAY
+            text = self.font.render(diff, True, color)
+            text_rect = text.get_rect(center=(SCREEN_WIDTH // 2, y_offset))
+            self.screen.blit(text, text_rect)
+            y_offset += 50
+
+        # Draw instructions
+        instructions = self.small_font.render("↑↓ to select, ENTER to start", True, WHITE)
+        inst_rect = instructions.get_rect(center=(SCREEN_WIDTH // 2, y_offset + 30))
+        self.screen.blit(instructions, inst_rect)
+
+        pygame.display.flip()
 
     def draw(self):
         self.screen.fill(BLACK)
@@ -118,14 +148,16 @@ class TetrisGame:
                                         preview_y + y * BLOCK_SIZE,
                                         BLOCK_SIZE - 1, BLOCK_SIZE - 1))
 
-        # Draw score and level
+        # Draw score, level and difficulty
         self.screen.blit(self.font.render(f"Score: {self.score}", True, WHITE),
                         (preview_x, preview_y + 120))
         self.screen.blit(self.font.render(f"Level: {self.level}", True, WHITE),
                         (preview_x, preview_y + 160))
+        self.screen.blit(self.font.render(f"Difficulty: {self.difficulty}", True, WHITE),
+                        (preview_x, preview_y + 200))
 
         # Draw controls
-        self.draw_controls(preview_x, preview_y + 200)
+        self.draw_controls(preview_x, preview_y + 240)
 
         if self.game_over:
             game_over_text = self.font.render("GAME OVER", True, WHITE)
@@ -200,21 +232,32 @@ class TetrisGame:
                 self.board.insert(0, [None for _ in range(GRID_WIDTH)])
 
             self.lines_cleared += len(lines_to_clear)
-            self.score += POINTS[len(lines_to_clear)] * self.level
+            # Apply difficulty multiplier to score
+            multiplier = DIFFICULTY_LEVELS[self.difficulty]["score_multiplier"]
+            self.score += int(POINTS[len(lines_to_clear)] * self.level * multiplier)
             self.level = self.lines_cleared // 10 + 1
-            self.fall_speed = int(INITIAL_FALL_SPEED * (LEVEL_SPEEDUP ** (self.level - 1)))
+            # Apply difficulty speedup
+            speedup = DIFFICULTY_LEVELS[self.difficulty]["speedup"]
+            self.fall_speed = int(DIFFICULTY_LEVELS[self.difficulty]["fall_speed"] * 
+                                (speedup ** (self.level - 1)))
 
     def run(self):
         while True:
-            if not self.handle_input():
-                break
+            if self.show_menu:
+                if not self.handle_menu_input():
+                    break
+                self.draw_menu()
+            else:
+                if not self.handle_game_input():
+                    break
 
-            current_time = pygame.time.get_ticks()
-            if not self.game_over and not self.paused and current_time - self.last_fall >= self.fall_speed:
-                self.move_down()
-                self.last_fall = current_time
+                current_time = pygame.time.get_ticks()
+                if not self.game_over and not self.paused and current_time - self.last_fall >= self.fall_speed:
+                    self.move_down()
+                    self.last_fall = current_time
 
-            self.draw()
+                self.draw()
+
             self.clock.tick(FPS)
 
         pygame.quit()
