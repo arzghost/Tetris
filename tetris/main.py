@@ -117,7 +117,11 @@ class TetrisGame:
 
     def draw(self):
         self.screen.fill(BLACK)
-        
+
+        # Draw frame around play field
+        pygame.draw.rect(self.screen, WHITE, 
+                        (0, 0, GRID_WIDTH * BLOCK_SIZE, GRID_HEIGHT * BLOCK_SIZE), 2)
+
         # Draw game board
         for y in range(GRID_HEIGHT):
             for x in range(GRID_WIDTH):
@@ -151,7 +155,7 @@ class TetrisGame:
                         (preview_x, preview_y + 120))
         self.screen.blit(self.font.render(f"Level: {self.level}", True, WHITE),
                         (preview_x, preview_y + 160))
-        
+
         if self.game_over:
             game_over_text = self.font.render("GAME OVER", True, WHITE)
             restart_text = self.font.render("Press R to restart", True, WHITE)
