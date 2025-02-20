@@ -122,6 +122,12 @@ class TetrisGame:
         pygame.draw.rect(self.screen, WHITE, 
                         (0, 0, GRID_WIDTH * BLOCK_SIZE, GRID_HEIGHT * BLOCK_SIZE), 2)
 
+        # Draw frame around right panel
+        preview_x = GRID_WIDTH * BLOCK_SIZE + 20
+        preview_width = SCREEN_WIDTH - preview_x - 20
+        pygame.draw.rect(self.screen, WHITE,
+                        (preview_x, 0, preview_width, SCREEN_HEIGHT), 2)
+
         # Draw game board
         for y in range(GRID_HEIGHT):
             for x in range(GRID_WIDTH):
