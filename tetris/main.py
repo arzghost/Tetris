@@ -263,6 +263,24 @@ class TetrisGame:
         pygame.quit()
         sys.exit()
 
+    def draw_controls(self, x, y):
+        """Draw the game controls information in the side panel"""
+        controls = [
+            "Controls:",
+            "Left/Right - Move",
+            "Up - Rotate",
+            "Down - Soft Drop",
+            "Space - Hard Drop",
+            "P - Pause",
+            "R - Restart",
+            "ESC - Exit"
+        ]
+
+        for i, text in enumerate(controls):
+            surface = self.small_font.render(text, True, WHITE)
+            self.screen.blit(surface, (x, y + i * 25))
+
+
 if __name__ == "__main__":
     game = TetrisGame()
     game.run()
