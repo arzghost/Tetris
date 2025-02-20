@@ -38,6 +38,8 @@ class TetrisGame:
                     return False
                 if event.key == pygame.K_p:  # Toggle pause
                     self.paused = not self.paused
+                elif event.key == pygame.K_r:  # Reset game
+                    self.reset_game()
                 elif not self.game_over and not self.paused:
                     if event.key == pygame.K_LEFT:
                         self.move(-1)
@@ -47,8 +49,6 @@ class TetrisGame:
                         self.rotate_piece()
                     elif event.key == pygame.K_SPACE:
                         self.hard_drop()
-                elif event.key == pygame.K_r:
-                    self.reset_game()
 
         # Handle soft drop
         if not self.game_over and not self.paused and pygame.key.get_pressed()[pygame.K_DOWN]:
@@ -59,76 +59,16 @@ class TetrisGame:
 
         return True
 
-    def move(self, dx):
-        current_time = pygame.time.get_ticks()
-        if current_time - self.last_move < MOVE_DELAY:
-            return
-
-        self.current_piece.x += dx
-        if not self.current_piece.is_valid_position(self.board):
-            self.current_piece.x -= dx
-        else:
-            self.sounds.play_move()
-            self.last_move = current_time
-
-    def rotate_piece(self):
-        rotated = self.current_piece.rotate()
-        if self.current_piece.is_valid_position(self.board, shape=rotated):
-            self.current_piece.shape = rotated
-            self.sounds.play_rotate()
-
-    def move_down(self):
-        self.current_piece.y += 1
-        if not self.current_piece.is_valid_position(self.board):
-            self.current_piece.y -= 1
-            self.freeze_piece()
-            return False
-        return True
-
-    def hard_drop(self):
-        while self.move_down():
-            pass
-        self.sounds.play_drop()
-
-    def freeze_piece(self):
-        for x, y in self.current_piece.get_positions():
-            if y >= 0:
-                self.board[y][x] = self.current_piece.color
-
-        self.clear_lines()
-        self.current_piece = self.next_piece
-        self.next_piece = Tetromino()
-
-        if not self.current_piece.is_valid_position(self.board):
-            self.game_over = True
-
-    def clear_lines(self):
-        lines_to_clear = []
-        for y in range(GRID_HEIGHT):
-            if all(self.board[y]):
-                lines_to_clear.append(y)
-
-        if lines_to_clear:
-            self.sounds.play_clear()
-            for y in lines_to_clear:
-                del self.board[y]
-                self.board.insert(0, [None for _ in range(GRID_WIDTH)])
-
-            self.lines_cleared += len(lines_to_clear)
-            self.score += POINTS[len(lines_to_clear)] * self.level
-            self.level = self.lines_cleared // 10 + 1
-            self.fall_speed = int(INITIAL_FALL_SPEED * (LEVEL_SPEEDUP ** (self.level - 1)))
-
     def draw_controls(self, x, y):
         controls = [
-            "Управление:",
-            "←→ - Движение",
-            "↑ - Поворот",
-            "↓ - Ускорение",
-            "Пробел - Сброс",
-            "P - Пауза",
-            "R - Рестарт",
-            "ESC - Выход"
+            "Controls:",
+            "Left/Right - Move",
+            "Up - Rotate",
+            "Down - Soft Drop",
+            "Space - Hard Drop",
+            "P - Pause",
+            "R - Restart",
+            "ESC - Exit"
         ]
 
         for i, text in enumerate(controls):
@@ -197,12 +137,72 @@ class TetrisGame:
                            (SCREEN_WIDTH // 2 - restart_text.get_width() // 2,
                             SCREEN_HEIGHT // 2 + 10))
         elif self.paused:
-            pause_text = self.font.render("ПАУЗА", True, WHITE)
+            pause_text = self.font.render("PAUSED", True, WHITE)
             self.screen.blit(pause_text,
                            (SCREEN_WIDTH // 2 - pause_text.get_width() // 2,
                             SCREEN_HEIGHT // 2))
 
         pygame.display.flip()
+
+    def move(self, dx):
+        current_time = pygame.time.get_ticks()
+        if current_time - self.last_move < MOVE_DELAY:
+            return
+
+        self.current_piece.x += dx
+        if not self.current_piece.is_valid_position(self.board):
+            self.current_piece.x -= dx
+        else:
+            self.sounds.play_move()
+            self.last_move = current_time
+
+    def rotate_piece(self):
+        rotated = self.current_piece.rotate()
+        if self.current_piece.is_valid_position(self.board, shape=rotated):
+            self.current_piece.shape = rotated
+            self.sounds.play_rotate()
+
+    def move_down(self):
+        self.current_piece.y += 1
+        if not self.current_piece.is_valid_position(self.board):
+            self.current_piece.y -= 1
+            self.freeze_piece()
+            return False
+        return True
+
+    def hard_drop(self):
+        while self.move_down():
+            pass
+        self.sounds.play_drop()
+
+    def freeze_piece(self):
+        for x, y in self.current_piece.get_positions():
+            if y >= 0:
+                self.board[y][x] = self.current_piece.color
+
+        self.clear_lines()
+        self.current_piece = self.next_piece
+        self.next_piece = Tetromino()
+
+        if not self.current_piece.is_valid_position(self.board):
+            self.game_over = True
+
+    def clear_lines(self):
+        lines_to_clear = []
+        for y in range(GRID_HEIGHT):
+            if all(self.board[y]):
+                lines_to_clear.append(y)
+
+        if lines_to_clear:
+            self.sounds.play_clear()
+            for y in lines_to_clear:
+                del self.board[y]
+                self.board.insert(0, [None for _ in range(GRID_WIDTH)])
+
+            self.lines_cleared += len(lines_to_clear)
+            self.score += POINTS[len(lines_to_clear)] * self.level
+            self.level = self.lines_cleared // 10 + 1
+            self.fall_speed = int(INITIAL_FALL_SPEED * (LEVEL_SPEEDUP ** (self.level - 1)))
 
     def run(self):
         while True:
