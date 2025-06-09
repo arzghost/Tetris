@@ -1,11 +1,15 @@
 import pygame
 import sys
+import os
 from constants import *
 from tetromino import Tetromino
 from sounds import SoundEffects
 
 class TetrisGame:
     def __init__(self):
+        # Set SDL video driver for headless mode
+        os.environ['SDL_VIDEODRIVER'] = 'dummy'
+        
         pygame.init()
         self.screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
         pygame.display.set_caption("Tetris")

@@ -19,6 +19,10 @@ author = "agent"
 task = "workflow.run"
 args = "Tetris Game"
 
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Tetris Web Game"
+
 [[workflows.workflow]]
 name = "Tetris Game"
 author = "agent"
@@ -32,3 +36,16 @@ task = "packager.installForAll"
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "python tetris/main.py"
+
+[[workflows.workflow]]
+name = "Tetris Web Game"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "python main.py"
+waitForPort = 5000
+
+[[ports]]
+localPort = 5000
+externalPort = 80
