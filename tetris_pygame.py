@@ -5,10 +5,12 @@ import random
 from enum import Enum
 
 # Set up display for headless environment
-os.environ['SDL_VIDEODRIVER'] = 'x11'
+os.environ['SDL_VIDEODRIVER'] = 'dummy'
+os.environ['DISPLAY'] = ':99'
 
 # Initialize pygame
 pygame.init()
+pygame.mixer.quit()  # Disable audio to avoid issues
 
 # Constants
 GRID_WIDTH = 10
