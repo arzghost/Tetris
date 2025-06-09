@@ -194,6 +194,50 @@
         let gameState = null;
         let gameLoop = null;
         
+        // Sound effects using Web Audio API
+        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        
+        function createSound(frequency, duration, type = 'sine') {
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+            
+            oscillator.frequency.value = frequency;
+            oscillator.type = type;
+            
+            gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + duration);
+            
+            oscillator.start(audioContext.currentTime);
+            oscillator.stop(audioContext.currentTime + duration);
+        }
+        
+        function playMoveSound() {
+            createSound(200, 0.1, 'square');
+        }
+        
+        function playRotateSound() {
+            createSound(300, 0.15, 'sawtooth');
+        }
+        
+        function playDropSound() {
+            createSound(150, 0.3, 'triangle');
+        }
+        
+        function playClearSound() {
+            // Multi-tone sound for line clear
+            createSound(400, 0.5, 'sine');
+            setTimeout(() => createSound(500, 0.4, 'sine'), 100);
+            setTimeout(() => createSound(600, 0.3, 'sine'), 200);
+        }
+        
+        function playGameOverSound() {
+            createSound(100, 0.8, 'sawtooth');
+            setTimeout(() => createSound(80, 0.6, 'sawtooth'), 200);
+        }
+        
         // Initialize game
         async function initGame() {
             await updateGameState();
@@ -213,6 +257,9 @@
         
         async function sendAction(action) {
             try {
+                const oldScore = gameState ? gameState.score : 0;
+                const oldLines = gameState ? gameState.lines_cleared : 0;
+                
                 const response = await fetch('/api/move', {
                     method: 'POST',
                     headers: {
@@ -221,6 +268,26 @@
                     body: JSON.stringify({ action })
                 });
                 gameState = await response.json();
+                
+                // Play appropriate sounds
+                if (action === 'left' || action === 'right' || action === 'down') {
+                    playMoveSound();
+                } else if (action === 'rotate') {
+                    playRotateSound();
+                } else if (action === 'drop') {
+                    playDropSound();
+                }
+                
+                // Check for line clear
+                if (gameState.lines_cleared > oldLines) {
+                    playClearSound();
+                }
+                
+                // Check for game over
+                if (gameState.game_over && !oldScore) {
+                    playGameOverSound();
+                }
+                
                 render();
                 updateUI();
             } catch (error) {

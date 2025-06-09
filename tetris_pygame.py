@@ -10,7 +10,8 @@ os.environ['DISPLAY'] = ':99'
 
 # Initialize pygame
 pygame.init()
-pygame.mixer.quit()  # Disable audio to avoid issues
+# Initialize mixer for sound effects
+pygame.mixer.init(frequency=22050, size=-16, channels=2, buffer=512)
 
 # Constants
 GRID_WIDTH = 10
@@ -39,6 +40,52 @@ COLORS = [
     (255, 20, 147),  # Deep Pink
     (50, 205, 50)    # Lime Green
 ]
+
+class SoundEffects:
+    def __init__(self):
+        self.move_sound = self._create_sound(200, 0.1)
+        self.rotate_sound = self._create_sound(300, 0.15)
+        self.drop_sound = self._create_sound(150, 0.3)
+        self.clear_sound = self._create_sound(400, 0.5)
+        self.game_over_sound = self._create_sound(100, 0.8)
+    
+    def _create_sound(self, frequency, duration):
+        """Create a simple sine wave sound"""
+        try:
+            import numpy as np
+            sample_rate = 22050
+            frames = int(duration * sample_rate)
+            arr = np.zeros((frames, 2), dtype=np.int16)
+            for i in range(frames):
+                time = float(i) / sample_rate
+                wave = np.sin(frequency * 2 * np.pi * time)
+                value = int(32767 * 0.3 * wave)
+                arr[i, 0] = value
+                arr[i, 1] = value
+            sound = pygame.sndarray.make_sound(arr)
+            return sound
+        except:
+            return None
+    
+    def play_move(self):
+        if self.move_sound:
+            self.move_sound.play()
+    
+    def play_rotate(self):
+        if self.rotate_sound:
+            self.rotate_sound.play()
+    
+    def play_drop(self):
+        if self.drop_sound:
+            self.drop_sound.play()
+    
+    def play_clear(self):
+        if self.clear_sound:
+            self.clear_sound.play()
+    
+    def play_game_over(self):
+        if self.game_over_sound:
+            self.game_over_sound.play()
 
 # Tetromino shapes
 TETROMINO_SHAPES = [
@@ -263,6 +310,7 @@ class TetrisGame:
         self.clock = pygame.time.Clock()
         self.font = pygame.font.Font(None, 36)
         self.small_font = pygame.font.Font(None, 24)
+        self.sounds = SoundEffects()
         
         self.reset_game()
 
@@ -305,6 +353,8 @@ class TetrisGame:
         if self.current_piece.is_valid_position(self.board, dx, dy):
             self.current_piece.x += dx
             self.current_piece.y += dy
+            if dx != 0:  # Horizontal movement
+                self.sounds.play_move()
             return True
         elif dy > 0:  # Piece hit bottom
             self.place_piece()
