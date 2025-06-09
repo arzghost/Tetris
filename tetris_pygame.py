@@ -365,10 +365,12 @@ class TetrisGame:
         new_rotation = self.current_piece.rotate()
         if self.current_piece.is_valid_position(self.board, rotation=new_rotation):
             self.current_piece.rotation = new_rotation
+            self.sounds.play_rotate()
 
     def hard_drop(self):
         while self.move_piece(0, 1):
             self.score += 1
+        self.sounds.play_drop()
 
     def place_piece(self):
         blocks = self.current_piece.get_blocks()
@@ -382,12 +384,14 @@ class TetrisGame:
             self.score += [0, 100, 300, 500, 800][min(lines, 4)] * self.level
             self.level = self.lines_cleared // 10 + 1
             self.fall_speed = max(50, 500 - (self.level - 1) * 25)
+            self.sounds.play_clear()
 
         self.current_piece = self.next_piece
         self.next_piece = Tetromino()
 
         if not self.current_piece.is_valid_position(self.board):
             self.game_over = True
+            self.sounds.play_game_over()
 
     def clear_lines(self):
         lines_to_clear = []
